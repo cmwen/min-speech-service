@@ -1,13 +1,6 @@
 import { z } from 'zod';
 
-export const speechAudioFormatSchema = z.enum([
-  'mp3',
-  'wav',
-  'flac',
-  'aac',
-  'opus',
-  'pcm',
-]);
+export const speechAudioFormatSchema = z.enum(['mp3', 'wav', 'flac', 'pcm']);
 export const transcriptionResponseFormatSchema = z.enum([
   'text',
   'json',
@@ -59,8 +52,20 @@ export const capabilitiesSchema = z.object({
   }),
   realtime: z.object({
     supported: z.boolean(),
-    upstreamEndpoint: z.string(),
+    upstreamEndpoint: z.string().optional(),
   }),
+});
+
+export const transcriptionResultSchema = z.object({
+  text: z.string(),
+  model: z.string(),
+  provider: z.literal('openai-compatible'),
+  raw: z.unknown(),
+});
+
+export const serviceErrorResponseSchema = z.object({
+  error: z.string(),
+  details: z.unknown().optional(),
 });
 
 export type SpeechAudioFormat = z.infer<typeof speechAudioFormatSchema>;
@@ -70,3 +75,5 @@ export type SpeechSynthesisRequest = z.infer<
 export type TranscriptionOptions = z.infer<typeof transcriptionOptionsSchema>;
 export type SpeechHealthStatus = z.infer<typeof healthStatusSchema>;
 export type SpeechCapabilities = z.infer<typeof capabilitiesSchema>;
+export type TranscriptionResult = z.infer<typeof transcriptionResultSchema>;
+export type ServiceErrorResponse = z.infer<typeof serviceErrorResponseSchema>;

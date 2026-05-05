@@ -35,8 +35,7 @@ describe('createSpeechClient', () => {
             responseFormats: ['wav'],
           },
           realtime: {
-            supported: true,
-            upstreamEndpoint: 'http://127.0.0.1:8000/v1/realtime',
+            supported: false,
           },
         }),
       );
@@ -91,5 +90,37 @@ describe('createSpeechClient', () => {
     await expect(client.speak({ input: 'Hello' })).resolves.toBeInstanceOf(
       Blob,
     );
+  });
+
+  it('throws a typed error when the service returns a non-2xx response', async () => {
+    const fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ error: 'Expected multipart field "file".' }),
+          {
+            status: 400,
+            statusText: 'Bad Request',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
+    );
+
+    const client = createSpeechClient({
+      baseUrl: 'http://127.0.0.1:8790/',
+      fetch: fetch as typeof globalThis.fetch,
+    });
+
+    await expect(
+      client.transcribe(new Blob([new Uint8Array([1, 2, 3])]), {
+        filename: 'recording.webm',
+      }),
+    ).rejects.toMatchObject({
+      name: 'SpeechClientError',
+      status: 400,
+      statusText: 'Bad Request',
+      body: { error: 'Expected multipart field "file".' },
+    });
   });
 });

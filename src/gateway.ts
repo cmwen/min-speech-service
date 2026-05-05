@@ -39,8 +39,6 @@ const contentTypeByFormat: Record<SpeechAudioFormat, string> = {
   mp3: 'audio/mpeg',
   wav: 'audio/wav',
   flac: 'audio/flac',
-  aac: 'audio/aac',
-  opus: 'audio/opus',
   pcm: 'audio/L16',
 };
 

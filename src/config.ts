@@ -21,9 +21,7 @@ const envSchema = z.object({
     .min(1)
     .default('speaches-ai/Kokoro-82M-v1.0-ONNX'),
   TTS_VOICE: z.string().trim().min(1).default('af_heart'),
-  TTS_RESPONSE_FORMAT: z
-    .enum(['mp3', 'wav', 'flac', 'aac', 'opus', 'pcm'])
-    .default('wav'),
+  TTS_RESPONSE_FORMAT: z.enum(['mp3', 'wav', 'flac', 'pcm']).default('wav'),
   ALLOWED_ORIGINS: z.string().default('*'),
 });
 

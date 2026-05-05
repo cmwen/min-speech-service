@@ -12,9 +12,11 @@ It exposes a stable web-friendly API for:
 The service is designed around an **OpenAI-compatible upstream**. The recommended local backend is [`speaches`](https://github.com/speaches-ai/speaches), which gives you:
 
 - `faster-whisper` for STT
-- `Kokoro-82M` or Piper for TTS
+- `Kokoro-82M` for TTS
 - one Docker service
 - the option to swap to the real OpenAI Audio API later without changing your app contract
+
+Piper is still available in some local stacks, but it is no longer the recommended default because the upstream project is archived.
 
 ## Why this shape
 
@@ -70,7 +72,7 @@ This repo keeps one extra layer in front of the upstream so both apps can share:
 | `STT_RESPONSE_FORMAT` | `json` | Default transcription format |
 | `TTS_MODEL` | `speaches-ai/Kokoro-82M-v1.0-ONNX` | Default synthesis model |
 | `TTS_VOICE` | `af_heart` | Default voice |
-| `TTS_RESPONSE_FORMAT` | `wav` | Default output audio format |
+| `TTS_RESPONSE_FORMAT` | `wav` | Default output audio format (`mp3`, `wav`, `flac`, or `pcm`) |
 | `ALLOWED_ORIGINS` | `*` | Comma-separated CORS allowlist |
 
 ## API
@@ -81,7 +83,7 @@ Returns the current service health and whether the upstream is reachable.
 
 ### `GET /v1/capabilities`
 
-Returns the configured STT/TTS defaults and supported response formats.
+Returns the configured STT/TTS defaults and supported response formats. The facade currently exposes request/response speech only; realtime proxying is intentionally out of scope.
 
 ### `POST /v1/audio/transcriptions`
 
@@ -144,7 +146,14 @@ const audio = await speech.speak({
 });
 ```
 
+The client throws `SpeechClientError` on non-2xx responses so app integrations can surface service or validation failures explicitly.
+
 ## Integration guidance
+
+Detailed integration and operations docs live in:
+
+- [`docs/INTEGRATION.md`](docs/INTEGRATION.md)
+- [`docs/RUNBOOK.md`](docs/RUNBOOK.md)
 
 ### `min-kb-app`
 
@@ -185,5 +194,4 @@ RUN_LIVE_SPEECH_TESTS=1 pnpm test:integration
 
 - `speaches` is the recommended local default, but any OpenAI-compatible speech API can sit behind this service.
 - For production, you can either keep `speaches` on a stronger host or switch `SPEECH_API_BASE_URL` to OpenAI-compatible cloud infrastructure.
-- `speaches` realtime support exists, but this repo currently focuses on request/response STT and TTS because that is the cleanest integration point for both target apps.
-
+- `speaches` has a realtime API, but this facade intentionally focuses on request/response STT and TTS because that is the cleanest shared integration point for both target apps.

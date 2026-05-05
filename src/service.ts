@@ -40,11 +40,10 @@ export const createSpeechService = (
         endpoint: '/v1/audio/speech',
         model: config.ttsModel,
         defaultVoice: config.ttsVoice,
-        responseFormats: ['mp3', 'wav', 'flac', 'aac', 'opus', 'pcm'],
+        responseFormats: ['mp3', 'wav', 'flac', 'pcm'],
       },
       realtime: {
-        supported: true,
-        upstreamEndpoint: `${config.apiBaseUrl}/realtime`,
+        supported: false,
       },
     });
   },
