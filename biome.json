@@ -1,7 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
   "files": {
-    "experimentalScannerIgnores": ["dist", "dist/**"]
+    "includes": ["**", "!!**/dist", "!!**/dist"]
   },
   "formatter": {
     "enabled": true,
