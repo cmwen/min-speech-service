@@ -20,6 +20,16 @@
    curl http://127.0.0.1:8790/health
    ```
 
+### Shared `/home/cmwen/dev` launcher
+
+If your repos live at the default paths under `/home/cmwen/dev`, you can also use:
+
+```bash
+/home/cmwen/dev/launch-kb-apps-tailscale.sh
+```
+
+That launcher now includes a `speech-service` tmux window, runs `docker compose -f compose.dev.yml up -d`, and starts the facade with `PORT=8790`. Set `SPEECH_SERVICE_START_BACKEND=0` if you want it to skip the backend startup step.
+
 ## Common recovery steps
 
 ### `/health` reports `upstreamOk: false`
@@ -33,6 +43,7 @@
 - This is usually model warm-up.
 - Keep `PRELOAD_MODELS` enabled in `compose.dev.yml`.
 - On a shared host, consider pinning models in memory instead of allowing them to unload aggressively.
+- The first zh-TW request may also trigger an on-demand download of `STT_MODEL_ZH_TW` or `TTS_MODEL_ZH_TW` if you did not preload them.
 
 ### Browser playback fails
 
@@ -47,7 +58,14 @@
 ### Local CPU performance is too slow
 
 - Keep the default distil Whisper model for STT.
+- Use `language: "zh-TW"` only when you need multilingual transcription, because it switches to the larger multilingual Whisper preset.
 - Move to a CUDA-capable `speaches` image before enabling heavier models or low-latency speech UX.
+
+### Traditional Chinese / Taiwan voice expectations
+
+- The facade accepts `language: "zh-TW"` on both transcription and synthesis requests.
+- `speaches` can auto-download the configured zh-TW STT/TTS models the first time that locale is used.
+- The current default zh-TW TTS preset uses the closest supported Mandarin voice in the `speaches` registry. There is not yet a true Taiwan-accented TTS model in the upstream registry, so override `TTS_MODEL_ZH_TW` and `TTS_VOICE_ZH_TW` if you add one later.
 
 ### You need to switch to a cloud backend
 

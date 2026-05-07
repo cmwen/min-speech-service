@@ -60,6 +60,14 @@ This repo keeps one extra layer in front of the upstream so both apps can share:
 
 4. The service listens on `http://127.0.0.1:8790` by default.
 
+If you keep the related repos under `/home/cmwen/dev`, the shared launcher now starts this service too:
+
+```bash
+/home/cmwen/dev/launch-kb-apps-tailscale.sh
+```
+
+That launcher opens a `speech-service` tmux window, starts the local `speaches` backend by default, and runs the facade on port `8790`.
+
 ## Environment
 
 | Variable | Default | Purpose |
@@ -69,11 +77,21 @@ This repo keeps one extra layer in front of the upstream so both apps can share:
 | `SPEECH_API_BASE_URL` | `http://127.0.0.1:8000/v1` | OpenAI-compatible upstream |
 | `SPEECH_API_KEY` | `local-no-auth` | Upstream API key |
 | `STT_MODEL` | `Systran/faster-distil-whisper-small.en` | Default transcription model |
+| `STT_MODEL_ZH_TW` | `Systran/faster-whisper-small` | zh-TW / Traditional Chinese transcription model |
 | `STT_RESPONSE_FORMAT` | `json` | Default transcription format |
 | `TTS_MODEL` | `speaches-ai/Kokoro-82M-v1.0-ONNX` | Default synthesis model |
 | `TTS_VOICE` | `af_heart` | Default voice |
+| `TTS_MODEL_ZH_TW` | `speaches-ai/piper-zh_CN-huayan-medium` | zh-TW synthesis model override |
+| `TTS_VOICE_ZH_TW` | `huayan` | zh-TW default voice |
 | `TTS_RESPONSE_FORMAT` | `wav` | Default output audio format (`mp3`, `wav`, `flac`, or `pcm`) |
 | `ALLOWED_ORIGINS` | `*` | Comma-separated CORS allowlist |
+
+The facade now treats `language: "zh-TW"` (and other Traditional Chinese tags such as `zh-Hant`) as a locale preset:
+
+- transcription switches to the multilingual Whisper model and auto-downloads it on first use if the upstream does not already have it
+- synthesis switches to the configured Chinese TTS model and voice, and also auto-downloads the model on demand
+
+`speaches` does not currently publish a Taiwan-accented TTS model in its registry, so the default zh-TW synthesis preset uses the closest supported Mandarin voice path today. If you publish or find a better Taiwan-accented upstream model later, you can swap it in with `TTS_MODEL_ZH_TW` and `TTS_VOICE_ZH_TW` without changing code.
 
 ## API
 
@@ -115,9 +133,8 @@ Request body:
 
 ```json
 {
-  "input": "Read this back to me",
-  "voice": "af_heart",
-  "model": "speaches-ai/Kokoro-82M-v1.0-ONNX",
+  "input": "請用繁體中文朗讀這段文字",
+  "language": "zh-TW",
   "responseFormat": "wav",
   "speed": 1
 }
@@ -138,11 +155,12 @@ const speech = createSpeechClient({
 
 const transcription = await speech.transcribe(file, {
   filename: file.name,
-  language: 'en',
+  language: 'zh-TW',
 });
 
 const audio = await speech.speak({
   input: transcription.text,
+  language: 'zh-TW',
 });
 ```
 

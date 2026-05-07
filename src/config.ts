@@ -12,6 +12,11 @@ const envSchema = z.object({
     .trim()
     .min(1)
     .default('Systran/faster-distil-whisper-small.en'),
+  STT_MODEL_ZH_TW: z
+    .string()
+    .trim()
+    .min(1)
+    .default('Systran/faster-whisper-small'),
   STT_RESPONSE_FORMAT: z
     .enum(['text', 'json', 'verbose_json', 'srt', 'vtt'])
     .default('json'),
@@ -21,6 +26,12 @@ const envSchema = z.object({
     .min(1)
     .default('speaches-ai/Kokoro-82M-v1.0-ONNX'),
   TTS_VOICE: z.string().trim().min(1).default('af_heart'),
+  TTS_MODEL_ZH_TW: z
+    .string()
+    .trim()
+    .min(1)
+    .default('speaches-ai/piper-zh_CN-huayan-medium'),
+  TTS_VOICE_ZH_TW: z.string().trim().min(1).default('huayan'),
   TTS_RESPONSE_FORMAT: z.enum(['mp3', 'wav', 'flac', 'pcm']).default('wav'),
   ALLOWED_ORIGINS: z.string().default('*'),
 });
@@ -32,9 +43,12 @@ export type AppConfig = {
   apiBaseUrl: string;
   apiKey: string;
   sttModel: string;
+  zhTwSttModel: string;
   sttResponseFormat: 'text' | 'json' | 'verbose_json' | 'srt' | 'vtt';
   ttsModel: string;
   ttsVoice: string;
+  zhTwTtsModel: string;
+  zhTwTtsVoice: string;
   ttsResponseFormat: SpeechAudioFormat;
   allowedOrigins: string[];
 };
@@ -52,9 +66,12 @@ export const readConfig = (env: NodeJS.ProcessEnv = process.env): AppConfig => {
     apiBaseUrl: parsed.SPEECH_API_BASE_URL.replace(/\/$/, ''),
     apiKey: parsed.SPEECH_API_KEY,
     sttModel: parsed.STT_MODEL,
+    zhTwSttModel: parsed.STT_MODEL_ZH_TW,
     sttResponseFormat: parsed.STT_RESPONSE_FORMAT,
     ttsModel: parsed.TTS_MODEL,
     ttsVoice: parsed.TTS_VOICE,
+    zhTwTtsModel: parsed.TTS_MODEL_ZH_TW,
+    zhTwTtsVoice: parsed.TTS_VOICE_ZH_TW,
     ttsResponseFormat: parsed.TTS_RESPONSE_FORMAT,
     allowedOrigins: allowedOrigins.length > 0 ? allowedOrigins : ['*'],
   };

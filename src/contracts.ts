@@ -11,10 +11,22 @@ export const transcriptionResponseFormatSchema = z.enum([
 
 export const speechSynthesisRequestSchema = z.object({
   input: z.string().trim().min(1),
+  language: z.string().trim().min(2).max(16).optional(),
   voice: z.string().trim().min(1).optional(),
   model: z.string().trim().min(1).optional(),
   responseFormat: speechAudioFormatSchema.optional(),
   speed: z.number().min(0.25).max(4).optional(),
+});
+
+const speechLanguageModelSchema = z.object({
+  language: z.string(),
+  model: z.string(),
+});
+
+const speechLanguageVoiceSchema = z.object({
+  language: z.string(),
+  model: z.string(),
+  defaultVoice: z.string(),
 });
 
 export const transcriptionOptionsSchema = z.object({
@@ -43,12 +55,14 @@ export const capabilitiesSchema = z.object({
     endpoint: z.literal('/v1/audio/transcriptions'),
     model: z.string(),
     responseFormats: z.array(transcriptionResponseFormatSchema),
+    languagePresets: z.array(speechLanguageModelSchema).optional(),
   }),
   synthesis: z.object({
     endpoint: z.literal('/v1/audio/speech'),
     model: z.string(),
     defaultVoice: z.string(),
     responseFormats: z.array(speechAudioFormatSchema),
+    languagePresets: z.array(speechLanguageVoiceSchema).optional(),
   }),
   realtime: z.object({
     supported: z.boolean(),

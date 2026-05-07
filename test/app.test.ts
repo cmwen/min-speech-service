@@ -11,9 +11,12 @@ const config: AppConfig = {
   apiBaseUrl: 'http://127.0.0.1:8000/v1',
   apiKey: 'local-no-auth',
   sttModel: 'Systran/faster-distil-whisper-small.en',
+  zhTwSttModel: 'Systran/faster-whisper-small',
   sttResponseFormat: 'json',
   ttsModel: 'speaches-ai/Kokoro-82M-v1.0-ONNX',
   ttsVoice: 'af_heart',
+  zhTwTtsModel: 'speaches-ai/piper-zh_CN-huayan-medium',
+  zhTwTtsVoice: 'huayan',
   ttsResponseFormat: 'wav',
   allowedOrigins: ['*'],
 };
@@ -26,12 +29,20 @@ const createService = (): SpeechService => ({
       endpoint: '/v1/audio/transcriptions',
       model: config.sttModel,
       responseFormats: ['text', 'json', 'verbose_json', 'srt', 'vtt'],
+      languagePresets: [{ language: 'zh-TW', model: config.zhTwSttModel }],
     },
     synthesis: {
       endpoint: '/v1/audio/speech',
       model: config.ttsModel,
       defaultVoice: config.ttsVoice,
       responseFormats: ['mp3', 'wav', 'flac', 'pcm'],
+      languagePresets: [
+        {
+          language: 'zh-TW',
+          model: config.zhTwTtsModel,
+          defaultVoice: config.zhTwTtsVoice,
+        },
+      ],
     },
     realtime: {
       supported: false,
@@ -113,6 +124,7 @@ describe('createApp', () => {
       },
       body: JSON.stringify({
         input: 'Hello from the test suite',
+        language: 'zh-TW',
       }),
     });
 
@@ -120,5 +132,11 @@ describe('createApp', () => {
     expect(response.headers.get('Content-Type')).toBe('audio/wav');
     expect(await response.arrayBuffer()).toBeInstanceOf(ArrayBuffer);
     expect(service.synthesize).toHaveBeenCalledOnce();
+    expect(service.synthesize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: 'Hello from the test suite',
+        language: 'zh-TW',
+      }),
+    );
   });
 });

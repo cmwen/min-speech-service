@@ -27,12 +27,20 @@ describe('createSpeechClient', () => {
             endpoint: '/v1/audio/transcriptions',
             model: 'stt-model',
             responseFormats: ['json'],
+            languagePresets: [{ language: 'zh-TW', model: 'stt-model-zh' }],
           },
           synthesis: {
             endpoint: '/v1/audio/speech',
             model: 'tts-model',
             defaultVoice: 'voice',
             responseFormats: ['wav'],
+            languagePresets: [
+              {
+                language: 'zh-TW',
+                model: 'tts-model-zh',
+                defaultVoice: 'huayan',
+              },
+            ],
           },
           realtime: {
             supported: false,
@@ -87,9 +95,24 @@ describe('createSpeechClient', () => {
       text: 'hello world',
     });
 
-    await expect(client.speak({ input: 'Hello' })).resolves.toBeInstanceOf(
-      Blob,
+    await expect(
+      client.speak({ input: 'Hello', language: 'zh-TW' }),
+    ).resolves.toBeInstanceOf(Blob);
+
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      'http://127.0.0.1:8790/v1/audio/speech',
+      expect.objectContaining({
+        method: 'POST',
+      }),
     );
+    const synthesisRequest = JSON.parse(
+      `${fetch.mock.calls[1]?.[1]?.body ?? '{}'}`,
+    );
+    expect(synthesisRequest).toMatchObject({
+      input: 'Hello',
+      language: 'zh-TW',
+    });
   });
 
   it('throws a typed error when the service returns a non-2xx response', async () => {

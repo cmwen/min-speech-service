@@ -8,6 +8,41 @@ import type {
 import { capabilitiesSchema, healthStatusSchema } from './contracts.js';
 import type { SpeechGateway } from './gateway.js';
 
+const normalizeLanguageTag = (language?: string) =>
+  language?.trim().toLowerCase().replace(/_/g, '-');
+
+const isTraditionalChineseLanguage = (language?: string) => {
+  const normalized = normalizeLanguageTag(language);
+
+  if (!normalized) {
+    return false;
+  }
+
+  return (
+    normalized === 'zh-tw' ||
+    normalized === 'zh-hant' ||
+    normalized === 'cmn-hant-tw' ||
+    normalized.endsWith('-tw') ||
+    normalized.includes('-hant')
+  );
+};
+
+const resolveTranscriptionModel = (config: AppConfig, language?: string) =>
+  isTraditionalChineseLanguage(language)
+    ? config.zhTwSttModel
+    : config.sttModel;
+
+const resolveSynthesisDefaults = (config: AppConfig, language?: string) =>
+  isTraditionalChineseLanguage(language)
+    ? {
+        model: config.zhTwTtsModel,
+        voice: config.zhTwTtsVoice,
+      }
+    : {
+        model: config.ttsModel,
+        voice: config.ttsVoice,
+      };
+
 export type SpeechService = {
   getCapabilities: () => SpeechCapabilities;
   getHealth: () => Promise<SpeechHealthStatus>;
@@ -35,12 +70,25 @@ export const createSpeechService = (
         endpoint: '/v1/audio/transcriptions',
         model: config.sttModel,
         responseFormats: ['text', 'json', 'verbose_json', 'srt', 'vtt'],
+        languagePresets: [
+          {
+            language: 'zh-TW',
+            model: config.zhTwSttModel,
+          },
+        ],
       },
       synthesis: {
         endpoint: '/v1/audio/speech',
         model: config.ttsModel,
         defaultVoice: config.ttsVoice,
         responseFormats: ['mp3', 'wav', 'flac', 'pcm'],
+        languagePresets: [
+          {
+            language: 'zh-TW',
+            model: config.zhTwTtsModel,
+            defaultVoice: config.zhTwTtsVoice,
+          },
+        ],
       },
       realtime: {
         supported: false,
@@ -62,11 +110,13 @@ export const createSpeechService = (
   },
   async transcribe(file, options) {
     const audio = new Uint8Array(await file.arrayBuffer());
+    const model =
+      options?.model ?? resolveTranscriptionModel(config, options?.language);
     const request = {
       audio,
       filename: file.name || 'upload.wav',
       mediaType: file.type || 'application/octet-stream',
-      model: options?.model ?? config.sttModel,
+      model,
       responseFormat: options?.responseFormat ?? config.sttResponseFormat,
       ...(options?.language ? { language: options.language } : {}),
       ...(options?.prompt ? { prompt: options.prompt } : {}),
@@ -78,14 +128,16 @@ export const createSpeechService = (
 
     return {
       ...result,
-      model: options?.model ?? config.sttModel,
+      model,
     };
   },
   async synthesize(request) {
+    const defaults = resolveSynthesisDefaults(config, request.language);
+
     return gateway.synthesize({
       input: request.input,
-      voice: request.voice ?? config.ttsVoice,
-      model: request.model ?? config.ttsModel,
+      voice: request.voice ?? defaults.voice,
+      model: request.model ?? defaults.model,
       responseFormat: request.responseFormat ?? config.ttsResponseFormat,
       ...(typeof request.speed === 'number' ? { speed: request.speed } : {}),
     });
