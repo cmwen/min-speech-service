@@ -33,6 +33,10 @@ const envSchema = z.object({
     .default('speaches-ai/piper-zh_CN-huayan-medium'),
   TTS_VOICE_ZH_TW: z.string().trim().min(1).default('huayan'),
   TTS_RESPONSE_FORMAT: z.enum(['mp3', 'wav', 'flac', 'pcm']).default('wav'),
+  NLP_API_BASE_URL: z.string().url().default('http://127.0.0.1:1234/v1'),
+  NLP_API_KEY: z.string().default('lm-studio'),
+  NLP_MODEL: z.string().trim().min(1).default('gemma-4-e4b'),
+  NLP_TARGET_LANGUAGE: z.string().trim().min(2).max(16).default('en'),
   ALLOWED_ORIGINS: z.string().default('*'),
 });
 
@@ -50,6 +54,10 @@ export type AppConfig = {
   zhTwTtsModel: string;
   zhTwTtsVoice: string;
   ttsResponseFormat: SpeechAudioFormat;
+  nlpBaseUrl: string;
+  nlpApiKey: string;
+  nlpModel: string;
+  nlpTargetLanguage: string;
   allowedOrigins: string[];
 };
 
@@ -73,6 +81,10 @@ export const readConfig = (env: NodeJS.ProcessEnv = process.env): AppConfig => {
     zhTwTtsModel: parsed.TTS_MODEL_ZH_TW,
     zhTwTtsVoice: parsed.TTS_VOICE_ZH_TW,
     ttsResponseFormat: parsed.TTS_RESPONSE_FORMAT,
+    nlpBaseUrl: parsed.NLP_API_BASE_URL.replace(/\/$/, ''),
+    nlpApiKey: parsed.NLP_API_KEY,
+    nlpModel: parsed.NLP_MODEL,
+    nlpTargetLanguage: parsed.NLP_TARGET_LANGUAGE,
     allowedOrigins: allowedOrigins.length > 0 ? allowedOrigins : ['*'],
   };
 };

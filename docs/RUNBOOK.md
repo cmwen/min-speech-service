@@ -14,6 +14,8 @@
    pnpm dev
    ```
 
+   That starts the workspace service package in `apps/service` and serves the built or source PWA assets from `apps/showcase`.
+
 3. Check health:
 
    ```bash
@@ -37,18 +39,22 @@ That launcher now includes a `speech-service` tmux window, runs `docker compose 
 - Check whether the `speaches` container is running.
 - Confirm `SPEECH_API_BASE_URL` still points at the backend's `/v1` root.
 - If the backend just started, retry after the model preload finishes.
+- If `/health` mentions `STT_MODEL_ZH_TW` or `TTS_MODEL_ZH_TW`, run `pnpm backend:preload` against the running backend or restart `docker compose -f compose.dev.yml up -d` so the configured preload list is applied.
 
 ### First STT or TTS request is slow
 
 - This is usually model warm-up.
 - Keep `PRELOAD_MODELS` enabled in `compose.dev.yml`.
+- `compose.dev.yml` now preloads the configured default STT/TTS pair and the configured Chinese STT/TTS pair from your env values.
+- The service logs `upstream model download started`, `upstream model download completed`, and `request failed` events so you can distinguish model-load problems from post-load synthesis or transcription failures.
 - On a shared host, consider pinning models in memory instead of allowing them to unload aggressively.
-- The first zh-TW request may also trigger an on-demand download of `STT_MODEL_ZH_TW` or `TTS_MODEL_ZH_TW` if you did not preload them.
+- If you change model env vars while the backend is already up, run `pnpm backend:preload` once to install the new set without waiting for the first live request.
 
 ### Browser playback fails
 
 - Keep `responseFormat` on `wav` unless you have confirmed a different backend format works end to end.
 - Verify the browser is receiving `Content-Type: audio/wav`.
+- If the root showcase page looks stale after an update, rebuild the PWA assets with `pnpm --filter min-speech-showcase build`.
 
 ### Browser upload fails with CORS
 
@@ -58,14 +64,15 @@ That launcher now includes a `speech-service` tmux window, runs `docker compose 
 ### Local CPU performance is too slow
 
 - Keep the default distil Whisper model for STT.
-- Use `language: "zh-TW"` only when you need multilingual transcription, because it switches to the larger multilingual Whisper preset.
+- Use a Chinese language hint such as `language: "zh"` or `language: "zh-TW"` only when you need multilingual transcription, because it switches to the larger multilingual Whisper preset.
 - Move to a CUDA-capable `speaches` image before enabling heavier models or low-latency speech UX.
 
 ### Traditional Chinese / Taiwan voice expectations
 
-- The facade accepts `language: "zh-TW"` on both transcription and synthesis requests.
+- The facade accepts Chinese language hints such as `language: "zh"` and `language: "zh-TW"` on both transcription and synthesis requests.
 - `speaches` can auto-download the configured zh-TW STT/TTS models the first time that locale is used.
 - The current default zh-TW TTS preset uses the closest supported Mandarin voice in the `speaches` registry. There is not yet a true Taiwan-accented TTS model in the upstream registry, so override `TTS_MODEL_ZH_TW` and `TTS_VOICE_ZH_TW` if you add one later.
+- The current Piper zh-CN preset only returns a tiny WAV blip for raw Han text in this stack, so the facade now romanizes Chinese synthesis input to numbered pinyin before sending it upstream.
 
 ### You need to switch to a cloud backend
 

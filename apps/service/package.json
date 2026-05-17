@@ -1,0 +1,38 @@
+{
+  "name": "min-speech-service",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./dist/src/public-api.js",
+    "./client": "./dist/src/client.js",
+    "./config": "./dist/src/config.js",
+    "./contracts": "./dist/src/contracts.js",
+    "./gateway": "./dist/src/gateway.js",
+    "./service": "./dist/src/service.js"
+  },
+  "types": "./dist/src/public-api.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:integration": "vitest run test/integration.test.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.4",
+    "hono": "^4.10.4",
+    "openai": "^6.5.0",
+    "pinyin-pro": "^3.28.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.7"
+  }
+}

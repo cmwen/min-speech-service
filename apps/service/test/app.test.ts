@@ -18,6 +18,10 @@ const config: AppConfig = {
   zhTwTtsModel: 'speaches-ai/piper-zh_CN-huayan-medium',
   zhTwTtsVoice: 'huayan',
   ttsResponseFormat: 'wav',
+  nlpBaseUrl: 'http://127.0.0.1:1234/v1',
+  nlpApiKey: 'lm-studio',
+  nlpModel: 'gemma-4-e4b',
+  nlpTargetLanguage: 'en',
   allowedOrigins: ['*'],
 };
 
@@ -47,6 +51,17 @@ const createService = (): SpeechService => ({
     realtime: {
       supported: false,
     },
+    textProcessing: {
+      endpoint: '/v1/text/process',
+      model: config.nlpModel,
+      targetLanguage: config.nlpTargetLanguage,
+      features: [
+        'intent-detection',
+        'filler-word-removal',
+        'message-rewrite',
+        'translation',
+      ],
+    },
   }),
   getHealth: vi.fn(async () => ({
     ok: true,
@@ -56,6 +71,9 @@ const createService = (): SpeechService => ({
     sttModel: config.sttModel,
     ttsModel: config.ttsModel,
     defaultVoice: config.ttsVoice,
+    nlpModel: config.nlpModel,
+    nlpUpstreamOk: true,
+    nlpUpstreamBaseUrl: config.nlpBaseUrl,
   })),
   transcribe: vi.fn(async () => ({
     text: 'hello world',
@@ -67,6 +85,19 @@ const createService = (): SpeechService => ({
     contentType: 'audio/wav',
     model: config.ttsModel,
     voice: config.ttsVoice,
+  })),
+  processText: vi.fn(async () => ({
+    sourceText: 'um can you email the summary',
+    detectedLanguage: 'en',
+    intent: 'Ask to email the summary',
+    cleanedText: 'can you email the summary',
+    rewrittenText: 'Can you email the summary?',
+    translatedText: 'Can you email the summary?',
+    targetLanguage: 'en',
+    fillerWords: ['um'],
+    model: config.nlpModel,
+    provider: 'openai-compatible' as const,
+    raw: { ok: true },
   })),
 });
 
@@ -85,7 +116,25 @@ describe('createApp', () => {
     expect(capabilitiesResponse.status).toBe(200);
     await expect(capabilitiesResponse.json()).resolves.toMatchObject({
       provider: 'openai-compatible',
+      textProcessing: {
+        endpoint: '/v1/text/process',
+      },
     });
+  });
+
+  it('serves the showcase PWA shell', async () => {
+    const app = createApp(config, createService());
+
+    const rootResponse = await app.request('/');
+    expect(rootResponse.status).toBe(200);
+    expect(rootResponse.headers.get('Content-Type')).toContain('text/html');
+    await expect(rootResponse.text()).resolves.toContain('/assets/app.js');
+
+    const manifestResponse = await app.request('/manifest.webmanifest');
+    expect(manifestResponse.status).toBe(200);
+    expect(manifestResponse.headers.get('Content-Type')).toContain(
+      'application/manifest+json',
+    );
   });
 
   it('transcribes a multipart upload', async () => {
@@ -138,5 +187,74 @@ describe('createApp', () => {
         language: 'zh-TW',
       }),
     );
+  });
+
+  it('logs synthesis request metadata and failures', async () => {
+    const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const service = createService();
+    service.synthesize = vi.fn(async () => {
+      throw new Error('synthetic synthesis failure');
+    });
+    const app = createApp(config, service);
+
+    const response = await app.request('/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        input: 'Hello from the test suite',
+        language: 'zh-TW',
+      }),
+    });
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'synthetic synthesis failure',
+    });
+    expect(debugSpy).toHaveBeenCalledWith(
+      '[min-speech-service] synthesis request parsed',
+      expect.objectContaining({
+        language: 'zh-TW',
+        model: null,
+        voice: null,
+        responseFormat: null,
+        speed: null,
+        inputLength: 'Hello from the test suite'.length,
+      }),
+    );
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[min-speech-service] request failed',
+      expect.objectContaining({
+        method: 'POST',
+        path: '/v1/audio/speech',
+        error: 'synthetic synthesis failure',
+      }),
+    );
+    debugSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
+
+  it('processes text with the NLP endpoint', async () => {
+    const service = createService();
+    const app = createApp(config, service);
+
+    const response = await app.request('/v1/text/process', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        input: 'um can you email the summary',
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      intent: 'Ask to email the summary',
+      fillerWords: ['um'],
+    });
+    expect(service.processText).toHaveBeenCalledOnce();
   });
 });

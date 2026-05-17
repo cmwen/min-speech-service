@@ -18,6 +18,12 @@ export const speechSynthesisRequestSchema = z.object({
   speed: z.number().min(0.25).max(4).optional(),
 });
 
+export const textProcessingRequestSchema = z.object({
+  input: z.string().trim().min(1),
+  language: z.string().trim().min(2).max(16).optional(),
+  targetLanguage: z.string().trim().min(2).max(16).optional(),
+});
+
 const speechLanguageModelSchema = z.object({
   language: z.string(),
   model: z.string(),
@@ -45,6 +51,9 @@ export const healthStatusSchema = z.object({
   sttModel: z.string(),
   ttsModel: z.string(),
   defaultVoice: z.string(),
+  nlpModel: z.string().optional(),
+  nlpUpstreamOk: z.boolean().optional(),
+  nlpUpstreamBaseUrl: z.string().url().optional(),
   detail: z.string().optional(),
 });
 
@@ -68,6 +77,14 @@ export const capabilitiesSchema = z.object({
     supported: z.boolean(),
     upstreamEndpoint: z.string().optional(),
   }),
+  textProcessing: z
+    .object({
+      endpoint: z.literal('/v1/text/process'),
+      model: z.string(),
+      targetLanguage: z.string(),
+      features: z.array(z.string()),
+    })
+    .optional(),
 });
 
 export const transcriptionResultSchema = z.object({
@@ -82,12 +99,40 @@ export const serviceErrorResponseSchema = z.object({
   details: z.unknown().optional(),
 });
 
+export const textProcessingGatewayResultSchema = z.object({
+  detectedLanguage: z.string().trim().min(1),
+  intent: z.string().trim().min(1),
+  cleanedText: z.string().trim().min(1),
+  rewrittenText: z.string().trim().min(1),
+  translatedText: z.string().trim().min(1),
+  fillerWords: z.array(z.string()).default([]),
+});
+
+export const textProcessingResultSchema = z.object({
+  sourceText: z.string(),
+  detectedLanguage: z.string(),
+  intent: z.string(),
+  cleanedText: z.string(),
+  rewrittenText: z.string(),
+  translatedText: z.string(),
+  targetLanguage: z.string(),
+  fillerWords: z.array(z.string()),
+  model: z.string(),
+  provider: z.literal('openai-compatible'),
+  raw: z.unknown(),
+});
+
 export type SpeechAudioFormat = z.infer<typeof speechAudioFormatSchema>;
 export type SpeechSynthesisRequest = z.infer<
   typeof speechSynthesisRequestSchema
 >;
+export type TextProcessingRequest = z.infer<typeof textProcessingRequestSchema>;
 export type TranscriptionOptions = z.infer<typeof transcriptionOptionsSchema>;
 export type SpeechHealthStatus = z.infer<typeof healthStatusSchema>;
 export type SpeechCapabilities = z.infer<typeof capabilitiesSchema>;
 export type TranscriptionResult = z.infer<typeof transcriptionResultSchema>;
 export type ServiceErrorResponse = z.infer<typeof serviceErrorResponseSchema>;
+export type TextProcessingGatewayResult = z.infer<
+  typeof textProcessingGatewayResultSchema
+>;
+export type TextProcessingResult = z.infer<typeof textProcessingResultSchema>;

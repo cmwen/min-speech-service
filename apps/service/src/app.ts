@@ -6,9 +6,11 @@ import { ZodError } from 'zod';
 import type { AppConfig } from './config.js';
 import {
   speechSynthesisRequestSchema,
+  textProcessingRequestSchema,
   transcriptionOptionsSchema,
 } from './contracts.js';
 import type { SpeechService } from './service.js';
+import { readShowcaseAsset } from './showcase.js';
 
 const pickBodyValue = <T>(value: T | T[] | undefined): T | undefined =>
   Array.isArray(value) ? value[0] : value;
@@ -56,6 +58,15 @@ export const createApp = (config: AppConfig, service: SpeechService) => {
         pickBodyValue(body.response_format) ??
         pickBodyValue(body.responseFormat),
     });
+    console.debug('[min-speech-service] transcription request parsed', {
+      filename: file.name || 'upload.wav',
+      mimeType: file.type || 'application/octet-stream',
+      language: options.language ?? null,
+      model: options.model ?? null,
+      responseFormat: options.responseFormat ?? null,
+      hasPrompt: Boolean(options.prompt),
+      temperature: options.temperature ?? null,
+    });
 
     const result = await service.transcribe(file, options);
     return c.json({
@@ -68,6 +79,14 @@ export const createApp = (config: AppConfig, service: SpeechService) => {
 
   app.post('/v1/audio/speech', async (c) => {
     const request = speechSynthesisRequestSchema.parse(await c.req.json());
+    console.debug('[min-speech-service] synthesis request parsed', {
+      language: request.language ?? null,
+      model: request.model ?? null,
+      voice: request.voice ?? null,
+      responseFormat: request.responseFormat ?? null,
+      speed: request.speed ?? null,
+      inputLength: request.input.length,
+    });
     const result = await service.synthesize(request);
     c.header('Content-Type', result.contentType);
     c.header('X-Speech-Model', result.model);
@@ -75,7 +94,30 @@ export const createApp = (config: AppConfig, service: SpeechService) => {
     return c.body(Uint8Array.from(result.audio));
   });
 
+  app.post('/v1/text/process', async (c) => {
+    const request = textProcessingRequestSchema.parse(await c.req.json());
+    return c.json(await service.processText(request));
+  });
+
+  app.get('*', async (c) => {
+    const asset = await readShowcaseAsset(c.req.path);
+
+    if (!asset) {
+      return c.json({ error: 'Not found.' }, 404);
+    }
+
+    c.header('Cache-Control', asset.cacheControl);
+    c.header('Content-Type', asset.contentType);
+    return c.body(asset.body);
+  });
+
   app.onError((error, c) => {
+    console.error('[min-speech-service] request failed', {
+      method: c.req.method,
+      path: c.req.path,
+      error: error instanceof Error ? error.message : 'Internal server error',
+    });
+
     if (error instanceof ZodError) {
       return c.json(
         {

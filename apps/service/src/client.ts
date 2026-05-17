@@ -3,6 +3,8 @@ import type {
   SpeechCapabilities,
   SpeechHealthStatus,
   SpeechSynthesisRequest,
+  TextProcessingRequest,
+  TextProcessingResult,
   TranscriptionOptions,
   TranscriptionResult,
 } from './contracts.js';
@@ -10,6 +12,7 @@ import {
   capabilitiesSchema,
   healthStatusSchema,
   serviceErrorResponseSchema,
+  textProcessingResultSchema,
   transcriptionResultSchema,
 } from './contracts.js';
 
@@ -26,6 +29,9 @@ export type SpeechClient = {
     options?: TranscriptionOptions & { filename?: string },
   ) => Promise<TranscriptionResult>;
   speak: (request: SpeechSynthesisRequest) => Promise<Blob>;
+  processText: (
+    request: TextProcessingRequest,
+  ) => Promise<TextProcessingResult>;
 };
 
 export class SpeechClientError extends Error {
@@ -158,6 +164,21 @@ export const createSpeechClient = ({
       return new Blob([await response.arrayBuffer()], {
         type: response.headers.get('Content-Type') ?? 'audio/wav',
       });
+    },
+    async processText(request) {
+      const response = await fetch(`${normalizedBaseUrl}/v1/text/process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        return throwForErrorResponse(response, 'Processing text');
+      }
+
+      return textProcessingResultSchema.parse(await response.json());
     },
   };
 };

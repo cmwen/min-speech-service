@@ -1,4 +1,4 @@
-import { createSpeechClient } from '../src/client.js';
+import { createSpeechClient } from 'min-speech-service';
 
 const speechClient = createSpeechClient({
   baseUrl: process.env.MIN_SPEECH_SERVICE_URL ?? 'http://127.0.0.1:8790',

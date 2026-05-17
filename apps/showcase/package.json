@@ -1,0 +1,8 @@
+{
+  "name": "min-speech-showcase",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "node ./scripts/build.mjs"
+  }
+}

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta
+      name="description"
+      content="Speech-to-text, text-to-speech, and NLP showcase for the local speech service."
+    />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/icon.svg" />
+    <title>min-speech-service showcase</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <div class="badge-row">
+          <span class="badge">PWA showcase</span>
+          <span class="badge">Local STT/TTS/NLP</span>
+          <span class="badge secondary" id="install-state">Install ready check…</span>
+        </div>
+        <h1>Speech + NLP demo</h1>
+        <p class="hero-copy">
+          Record audio, upload a clip, clean the transcript with the built-in
+          intent prompt, and turn the rewritten text back into speech.
+        </p>
+        <div class="hero-meta">
+          <p id="health-status" class="status">Checking service health...</p>
+          <p id="network-status" class="meta">Online</p>
+        </div>
+        <div class="actions">
+          <button id="install-app" class="secondary" type="button" hidden>
+            Install app
+          </button>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>Speech to text</h2>
+          <p class="hint">
+            Capture audio in the browser or upload a file, then send it to
+            <code>/v1/audio/transcriptions</code>.
+          </p>
+          <div class="field">
+            <label for="transcript-language">Language hint</label>
+            <input id="transcript-language" placeholder="en, zh-TW, ..." />
+          </div>
+          <div class="field">
+            <label for="audio-upload">Audio file</label>
+            <input id="audio-upload" type="file" accept="audio/*" />
+          </div>
+          <div class="actions">
+            <button id="start-recording" type="button">Start recording</button>
+            <button id="stop-recording" class="secondary" type="button" disabled>
+              Stop
+            </button>
+            <button
+              id="transcribe-recording"
+              class="secondary"
+              type="button"
+            >
+              Transcribe current audio
+            </button>
+          </div>
+          <!-- biome-ignore lint/a11y/useMediaCaption: live microphone previews do not have a caption track -->
+          <audio id="recording-preview" hidden controls></audio>
+          <div class="field">
+            <label for="transcript">Transcript</label>
+            <textarea
+              id="transcript"
+              placeholder="Transcript will appear here"
+            ></textarea>
+          </div>
+          <div class="actions">
+            <button id="copy-transcript" class="secondary" type="button">
+              Send transcript to NLP
+            </button>
+          </div>
+          <p id="stt-status" class="status"></p>
+        </article>
+
+        <article class="panel">
+          <h2>NLP</h2>
+          <p class="hint">
+            The built-in prompt removes filler words, detects intent, rewrites
+            the text, and translates it for the local Gemma model.
+          </p>
+          <div class="field">
+            <label for="nlp-language">Source language hint</label>
+            <input id="nlp-language" placeholder="optional" />
+          </div>
+          <div class="field">
+            <label for="target-language">Target translation language</label>
+            <input id="target-language" value="en" />
+          </div>
+          <div class="field">
+            <label for="nlp-input">Input text</label>
+            <textarea
+              id="nlp-input"
+              placeholder="Type or paste the message you want to normalize"
+            ></textarea>
+          </div>
+          <div class="actions">
+            <button id="process-text" type="button">Process text</button>
+          </div>
+          <div class="card-list">
+            <div class="result-card">
+              <strong>Intent</strong>
+              <pre id="result-intent">Waiting for input…</pre>
+            </div>
+            <div class="result-card">
+              <strong>Detected language</strong>
+              <pre id="result-detected-language">—</pre>
+            </div>
+            <div class="result-card">
+              <strong>Removed fillers</strong>
+              <div id="result-fillers" class="badge-row">
+                <span class="badge">—</span>
+              </div>
+            </div>
+            <div class="result-card">
+              <strong>Cleaned text</strong>
+              <pre id="result-cleaned">—</pre>
+            </div>
+            <div class="result-card">
+              <strong>Rewritten text</strong>
+              <pre id="result-rewritten">—</pre>
+            </div>
+            <div class="result-card">
+              <strong>Translated text</strong>
+              <pre id="result-translated">—</pre>
+            </div>
+          </div>
+          <p id="nlp-status" class="status"></p>
+        </article>
+
+        <article class="panel">
+          <h2>Text to speech</h2>
+          <p class="hint">
+            Turn either the original or rewritten message into speech with
+            <code>/v1/audio/speech</code>.
+          </p>
+          <div class="field">
+            <label for="tts-language">Language hint</label>
+            <input id="tts-language" placeholder="optional" />
+          </div>
+          <div class="field">
+            <label for="tts-input">Text</label>
+            <textarea id="tts-input" placeholder="Text to synthesize"></textarea>
+          </div>
+          <div class="actions">
+            <button id="speak-text" type="button">Generate speech</button>
+            <button id="copy-rewrite" class="secondary" type="button">
+              Use rewritten text
+            </button>
+          </div>
+          <!-- biome-ignore lint/a11y/useMediaCaption: generated speech playback is the primary audio output in this demo -->
+          <audio id="tts-playback" controls></audio>
+          <p id="tts-status" class="status"></p>
+        </article>
+      </section>
+    </main>
+    <script type="module" src="/assets/app.js"></script>
+  </body>
+</html>

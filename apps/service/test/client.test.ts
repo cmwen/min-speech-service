@@ -45,6 +45,12 @@ describe('createSpeechClient', () => {
           realtime: {
             supported: false,
           },
+          textProcessing: {
+            endpoint: '/v1/text/process',
+            model: 'gemma-4-e4b',
+            targetLanguage: 'en',
+            features: ['intent-detection'],
+          },
         }),
       );
     });
@@ -74,6 +80,23 @@ describe('createSpeechClient', () => {
         ),
       )
       .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            sourceText: 'um hello',
+            detectedLanguage: 'en',
+            intent: 'Say hello',
+            cleanedText: 'hello',
+            rewrittenText: 'Hello.',
+            translatedText: 'Hello.',
+            targetLanguage: 'en',
+            fillerWords: ['um'],
+            model: 'gemma-4-e4b',
+            provider: 'openai-compatible',
+            raw: { ok: true },
+          }),
+        ),
+      )
+      .mockResolvedValueOnce(
         new Response(new Uint8Array([1, 2, 3]), {
           headers: { 'Content-Type': 'audio/wav' },
         }),
@@ -96,18 +119,27 @@ describe('createSpeechClient', () => {
     });
 
     await expect(
+      client.processText({
+        input: 'um hello',
+      }),
+    ).resolves.toMatchObject({
+      intent: 'Say hello',
+      fillerWords: ['um'],
+    });
+
+    await expect(
       client.speak({ input: 'Hello', language: 'zh-TW' }),
     ).resolves.toBeInstanceOf(Blob);
 
     expect(fetch).toHaveBeenNthCalledWith(
-      2,
+      3,
       'http://127.0.0.1:8790/v1/audio/speech',
       expect.objectContaining({
         method: 'POST',
       }),
     );
     const synthesisRequest = JSON.parse(
-      `${fetch.mock.calls[1]?.[1]?.body ?? '{}'}`,
+      `${fetch.mock.calls[2]?.[1]?.body ?? '{}'}`,
     );
     expect(synthesisRequest).toMatchObject({
       input: 'Hello',

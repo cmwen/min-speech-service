@@ -1,6 +1,6 @@
 node_modules/
 dist/
+apps/**/dist/
 .env
 .DS_Store
 coverage/
-

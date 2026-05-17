@@ -8,6 +8,8 @@ Browser app -> app-local API/runtime proxy -> min-speech-service -> speaches
 
 That shape keeps browser code simple, keeps CORS/auth decisions inside each app runtime, and preserves the ability to swap the upstream from local `speaches` to another OpenAI-compatible provider later.
 
+In this repo, the service runtime lives in `apps/service` and the installable demo PWA lives in `apps/showcase`.
+
 ## Recommended backend
 
 The researched default stack for 2026 is:
