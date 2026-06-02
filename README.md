@@ -6,7 +6,7 @@ It exposes a stable web-friendly API for:
 
 - speech-to-text via `POST /v1/audio/transcriptions`
 - text-to-speech via `POST /v1/audio/speech`
-- NLP text cleanup and intent extraction via `POST /v1/text/process`
+- NLP text cleanup and intent extraction via `POST /v1/npl`
 - service health via `GET /health`
 - app-facing capability discovery via `GET /v1/capabilities`
 - a simple installable showcase app via `GET /`
@@ -167,7 +167,7 @@ Request body:
 
 Response is raw audio bytes with `Content-Type` set appropriately.
 
-### `POST /v1/text/process`
+### `POST /v1/npl`
 
 Request body:
 
@@ -211,7 +211,7 @@ It provides:
 
 - microphone capture and upload-driven speech-to-text
 - text-to-speech playback through the facade
-- NLP cleanup, intent detection, and translation via the new LM Studio endpoint
+- NLP cleanup, intent detection, and translation via the new NPL endpoint
 
 The demo also ships a web manifest and service worker so it can be installed as a lightweight PWA.
 

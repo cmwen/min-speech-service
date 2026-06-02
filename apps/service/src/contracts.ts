@@ -18,6 +18,11 @@ export const speechSynthesisRequestSchema = z.object({
   speed: z.number().min(0.25).max(4).optional(),
 });
 
+export const textProcessingEndpointSchema = z.enum([
+  '/v1/npl',
+  '/v1/text/process',
+]);
+
 export const textProcessingRequestSchema = z.object({
   input: z.string().trim().min(1),
   language: z.string().trim().min(2).max(16).optional(),
@@ -79,7 +84,7 @@ export const capabilitiesSchema = z.object({
   }),
   textProcessing: z
     .object({
-      endpoint: z.literal('/v1/text/process'),
+      endpoint: textProcessingEndpointSchema,
       model: z.string(),
       targetLanguage: z.string(),
       features: z.array(z.string()),

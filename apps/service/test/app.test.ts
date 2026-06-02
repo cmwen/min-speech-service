@@ -52,7 +52,7 @@ const createService = (): SpeechService => ({
       supported: false,
     },
     textProcessing: {
-      endpoint: '/v1/text/process',
+      endpoint: '/v1/npl',
       model: config.nlpModel,
       targetLanguage: config.nlpTargetLanguage,
       features: [
@@ -117,7 +117,7 @@ describe('createApp', () => {
     await expect(capabilitiesResponse.json()).resolves.toMatchObject({
       provider: 'openai-compatible',
       textProcessing: {
-        endpoint: '/v1/text/process',
+        endpoint: '/v1/npl',
       },
     });
   });
@@ -240,7 +240,7 @@ describe('createApp', () => {
     const service = createService();
     const app = createApp(config, service);
 
-    const response = await app.request('/v1/text/process', {
+    const response = await app.request('/v1/npl', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -254,6 +254,27 @@ describe('createApp', () => {
     await expect(response.json()).resolves.toMatchObject({
       intent: 'Ask to email the summary',
       fillerWords: ['um'],
+    });
+    expect(service.processText).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the legacy text-processing endpoint as an alias', async () => {
+    const service = createService();
+    const app = createApp(config, service);
+
+    const response = await app.request('/v1/text/process', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        input: 'um can you email the summary',
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      intent: 'Ask to email the summary',
     });
     expect(service.processText).toHaveBeenCalledOnce();
   });

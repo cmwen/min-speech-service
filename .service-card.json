@@ -1,0 +1,36 @@
+{
+  "name": "speech-service",
+  "description": "Shared STT/TTS facade for the local app services",
+  "type": "node",
+  "repo": "https://github.com/cmwen/min-speech-service",
+  "localPath": "/home/cmwen/dev/min-speech-service",
+  "window": "speech-service",
+  "ports": [
+    {
+      "port": 8790,
+      "name": "api",
+      "description": "Speech service API port"
+    }
+  ],
+  "tailscale": {
+    "export": true,
+    "httpsPort": 7445,
+    "targetPort": 8790
+  },
+  "environment": {
+    "NODE_ENV": "production",
+    "SPEECH_SERVICE_START_BACKEND": "0"
+  },
+  "command": {
+    "type": "shell",
+    "cwd": "/home/cmwen/dev/min-speech-service",
+    "command": "pnpm dev"
+  },
+  "dependencies": ["speaches"],
+  "healthCheck": {
+    "type": "http",
+    "interval": 5,
+    "timeout": 10,
+    "target": "http://127.0.0.1:8790/health"
+  }
+}

@@ -166,7 +166,7 @@ export const createSpeechClient = ({
       });
     },
     async processText(request) {
-      const response = await fetch(`${normalizedBaseUrl}/v1/text/process`, {
+      const response = await fetch(`${normalizedBaseUrl}/v1/npl`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

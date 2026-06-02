@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server';
-import { Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { ZodError } from 'zod';
 
@@ -94,10 +94,13 @@ export const createApp = (config: AppConfig, service: SpeechService) => {
     return c.body(Uint8Array.from(result.audio));
   });
 
-  app.post('/v1/text/process', async (c) => {
+  const handleTextProcessingRequest = async (c: Context) => {
     const request = textProcessingRequestSchema.parse(await c.req.json());
     return c.json(await service.processText(request));
-  });
+  };
+
+  app.post('/v1/npl', handleTextProcessingRequest);
+  app.post('/v1/text/process', handleTextProcessingRequest);
 
   app.get('*', async (c) => {
     const asset = await readShowcaseAsset(c.req.path);

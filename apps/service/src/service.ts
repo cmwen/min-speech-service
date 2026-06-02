@@ -153,7 +153,7 @@ export const createSpeechService = (
         supported: false,
       },
       textProcessing: {
-        endpoint: '/v1/text/process',
+        endpoint: '/v1/npl',
         model: config.nlpModel,
         targetLanguage: config.nlpTargetLanguage,
         features: [

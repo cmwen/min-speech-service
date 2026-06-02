@@ -46,7 +46,7 @@ describe('createSpeechClient', () => {
             supported: false,
           },
           textProcessing: {
-            endpoint: '/v1/text/process',
+            endpoint: '/v1/npl',
             model: 'gemma-4-e4b',
             targetLanguage: 'en',
             features: ['intent-detection'],
@@ -145,6 +145,13 @@ describe('createSpeechClient', () => {
       input: 'Hello',
       language: 'zh-TW',
     });
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      'http://127.0.0.1:8790/v1/npl',
+      expect.objectContaining({
+        method: 'POST',
+      }),
+    );
   });
 
   it('throws a typed error when the service returns a non-2xx response', async () => {
